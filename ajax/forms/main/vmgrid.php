@@ -1,6 +1,8 @@
 <?php
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . 'includes/vmm_restapi.php');
-    session_start();
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/database.class.php');
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
+    Session::session_start();
     function AddVMGridConfiguration($parent) {
         $col_name_array=array(
             "Name",

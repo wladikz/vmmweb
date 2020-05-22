@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <?php
-	session_start();
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/database.class.php');
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
+    Session::session_start();
     if ( !isset($_SESSION["AuthToken"])) {
         header("Location: index.php");
         exit;

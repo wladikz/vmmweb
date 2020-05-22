@@ -1,6 +1,9 @@
 <?php
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . 'includes/vmm_restapi.php');
-    session_start();
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/database.class.php');
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
+    Session::session_start();
+    
     if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         if (!empty($_GET['operation']) && !empty($_GET['id'])) {
             preg_match("/^svc_|^ct_|^vm_/",$_GET['id'],$matches);

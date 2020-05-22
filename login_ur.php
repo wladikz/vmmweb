@@ -1,9 +1,11 @@
 <?php
-	session_start();
-        if ( isset($_SESSION["AuthToken"]) && !empty($_SESSION["AuthToken"]) ) {
-            header("Location: main.php");
-            exit;
-        }        
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/database.class.php');
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
+    Session::session_start();
+    if ( isset($_SESSION["AuthToken"]) && !empty($_SESSION["AuthToken"]) ) {
+        header("Location: main.php");
+        exit;
+    }        
 ?>
 <html lang="en">
     <head>
