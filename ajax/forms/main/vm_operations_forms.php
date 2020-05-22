@@ -2,8 +2,9 @@
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/database.class.php');
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
     Session::session_start();
+
     
-    function CreateAddSnapshotFormXML($vmID) {
+    function CreateSnapshotFormXML($vmID) {
         $xml = new SimpleXMLElement('<xml version="1.0"/>');
         $items=$xml->addChild("items");
         $item=$items->addChild("item");
@@ -79,13 +80,145 @@
         
         return $xml;
     }
+    function SnapshotManagerFormXML($vmID) {
+        $xml = new SimpleXMLElement('<xml version="1.0"/>');
+        $items=$xml->addChild("items");
+        $item=$items->addChild("item");
+        $item->addAttribute("type", "settings");
+        $item->addAttribute("position","absolute");
+        $item->addAttribute("labelWidth",80);
+        $item->addAttribute("inputWidth",250);
+
+        $field=$items->addChild("item");
+        $field->addAttribute("type", "container");
+        $field->addAttribute("name", "CPTree");
+        $field->addAttribute("label", "Snapshots");
+        $field->addAttribute("labelWidth",425);  
+        $field->addAttribute("inputWidth",425);
+        $field->addAttribute("inputHeight",215);
+        $field->addAttribute("labelLeft",120);
+        $field->addAttribute("labelTop",5);
+        $field->addAttribute("inputLeft",5);
+        $field->addAttribute("inputTop",21);
+        
+        $field=$items->addChild("item");
+        $field->addAttribute("type", "input");
+        $field->addAttribute("name", "vmid");
+        $field->addAttribute("hidden", "true");        
+        $field->addAttribute("value", $vmID);
+        
+        $field=$items->addChild("item");
+        $field->addAttribute("type", "button");
+        $field->addAttribute("name", "btnRevert");
+        $field->addAttribute("disabled", "true");
+        $field->addAttribute("label", "Revert");
+        $field->addAttribute("value", "Revert");
+        $field->addAttribute("width", 150);
+        $field->addAttribute("inputWidth", 150);
+        $field->addAttribute("inputLeft", 450);
+        $field->addAttribute("inputTop", 5);
+
+        $field=$items->addChild("item");
+        $field->addAttribute("type", "button");
+        $field->addAttribute("name", "btnDelete");
+        $field->addAttribute("disabled", "true");
+        $field->addAttribute("label", "Delete");
+        $field->addAttribute("value", "Delete");
+        $field->addAttribute("width", 150);
+        $field->addAttribute("inputWidth", 150);
+        $field->addAttribute("inputLeft", 450);
+        $field->addAttribute("inputTop", 32);
+
+        $field=$items->addChild("item");
+        $field->addAttribute("type", "button");
+        $field->addAttribute("name", "btnDelWChilds");
+        $field->addAttribute("disabled", "true");
+        $field->addAttribute("label", "Delete With Childs");
+        $field->addAttribute("value", "Delete With Childs");
+        $field->addAttribute("width", 150);
+        $field->addAttribute("inputWidth", 150);
+        $field->addAttribute("inputLeft", 450);
+        $field->addAttribute("inputTop", 64);
+
+        $field=$items->addChild("item");
+        $field->addAttribute("type", "button");
+        $field->addAttribute("name", "btnClose");
+        $field->addAttribute("disabled", "false");
+        $field->addAttribute("label", "Close");
+        $field->addAttribute("value", "Close");
+        $field->addAttribute("width", 150);
+        $field->addAttribute("inputWidth", 150);
+        $field->addAttribute("inputLeft", 450);
+        $field->addAttribute("inputTop", 100);
+        return $xml;
+    }    
+    function RevertSnapshotFormXML($vmID) {
+        $xml = new SimpleXMLElement('<xml version="1.0"/>');
+        $items=$xml->addChild("items");
+        $item=$items->addChild("item");
+        $item->addAttribute("type", "settings");
+        $item->addAttribute("position","absolute");
+        $item->addAttribute("labelWidth",80);
+        $item->addAttribute("inputWidth",250);
+
+        $field=$items->addChild("item");
+        $field->addAttribute("type", "container");
+        $field->addAttribute("name", "CPTree");
+        $field->addAttribute("label", "Snapshots");
+        $field->addAttribute("labelWidth",425);  
+        $field->addAttribute("inputWidth",425);
+        $field->addAttribute("inputHeight",215);
+        $field->addAttribute("labelLeft",120);
+        $field->addAttribute("labelTop",5);
+        $field->addAttribute("inputLeft",5);
+        $field->addAttribute("inputTop",21);
+        
+        $field=$items->addChild("item");
+        $field->addAttribute("type", "input");
+        $field->addAttribute("name", "vmid");
+        $field->addAttribute("hidden", "true");        
+        $field->addAttribute("value", $vmID);
+        
+        $field=$items->addChild("item");
+        $field->addAttribute("type", "button");
+        $field->addAttribute("name", "btnRevert");
+        $field->addAttribute("disabled", "true");
+        $field->addAttribute("label", "Revert");
+        $field->addAttribute("value", "Revert");
+        $field->addAttribute("width", 150);
+        $field->addAttribute("inputWidth", 150);
+        $field->addAttribute("inputLeft", 450);
+        $field->addAttribute("inputTop", 5);
+
+        $field=$items->addChild("item");
+        $field->addAttribute("type", "button");
+        $field->addAttribute("name", "btnClose");
+        $field->addAttribute("disabled", "false");
+        $field->addAttribute("label", "Close");
+        $field->addAttribute("value", "Close");
+        $field->addAttribute("width", 150);
+        $field->addAttribute("inputWidth", 150);
+        $field->addAttribute("inputLeft", 450);
+        $field->addAttribute("inputTop", 32);
+        return $xml;
+    }    
+
     $result="";
     if (!empty($_GET['formtype'])) {
         switch ($_GET['formtype']) {
             case "CreateSnapshot" :
-                $items= CreateAddSnapshotFormXML($_GET['vmID']);
+                $items= CreateSnapshotFormXML($_GET['vmID']);
                 $result=$items->asXML();
-                break;                
+                break; 
+            case "SnapshotManager" :
+                $items= SnapshotManagerFormXML($_GET['vmID']);
+                $result=$items->asXML();
+                break;
+            case "RevertSnapshot" :
+                $items= RevertSnapshotFormXML($_GET['vmID']);
+                $result=$items->asXML();
+                break;
+
         }
 
         Header('Content-type: text/xml');

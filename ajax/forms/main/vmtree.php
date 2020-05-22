@@ -1,8 +1,11 @@
 <?php
-    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . 'includes/vmm_restapi.php');
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/database.class.php');
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
     Session::session_start();
+
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . 'includes/vmm_restapi.php');
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . 'actions/ReloadCache.php');
+    
     function CreateServiceSubtree($service,$parent) {
         $svcItem = $parent->addChild("item");
         $svcItem->addAttribute("id","svc_" . $service->ID);
@@ -51,32 +54,7 @@
         $item->addChild("userdata",$ComputerTier->InstanceCurrentCount)->addAttribute("name","CurrentCount");
         $item->addChild("userdata",$ComputerTier->VMStatus)->addAttribute("name","VMStatus");
     }
-    function GetServices(bool $reload=FALSE) {
-        if (isset($_SESSION["Services"]) && !$reload) {
-            return $_SESSION["Services"];
-        } else {
-            $vmm=new VMM();
-            $vmm->authHeader=$_SESSION["AuthToken"];
-            $services=$vmm->GetAllServices();
-            $_SESSION["Services"]=$services;
-            return $services;
-        }
-    }
-    function GetVMs(bool $reload=FALSE) {
-        if (isset($_SESSION["VMs"]) && !$reload) {
-            return $_SESSION["VMs"];
-        } else {
-            $vmm=new VMM();
-            $vmm->authHeader=$_SESSION["AuthToken"];
-            $vms=$vmm->GetAllVMs();
-            foreach ($vms as $vm) {
-                $vm->svcid=$vm->ComputerTier->Service->ID;
-                $vm->ctid=$vm->ComputerTier->ID;
-            }
-            $_SESSION["VMs"]=$vms;
-            return $vms;
-        }
-    }
+
     function SetItemStatus($id,$item,$tree_node_status){
         if (array_search($id, $tree_node_status) !== false) {
             $item->addAttribute('open','1');
@@ -120,6 +98,7 @@
             $item->addAttribute("text","All");
             $item->addAttribute("child","1");
             $item->addAttribute('open','1');
+            $item->addAttribute('select','yes');
         } else {
             if (is_numeric($_GET["id"]) && $_GET["id"] == 1) {
                 $services=GetServices();

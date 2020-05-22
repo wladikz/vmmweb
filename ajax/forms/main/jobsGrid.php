@@ -4,22 +4,41 @@
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/database.class.php');
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
     Session::session_start();
+    
     if (!isset($_SESSION["AuthToken"])) {
         exit;
     }
     function AddMainWebJobsGridConfiguration($parent) {
         $col_name_array=array(
             "Name",
+            "Status",
             "Start Date",
             "End Date",
-            "Status"
+            "Object Name"
             );
         $head=$parent->addChild('head');
         $headerFilter=array();
         foreach ($col_name_array as $value) {
             $col=$head->addChild('column',$value);
             $col->addAttribute('type',"ro");
-            $col->addAttribute('width',"*");
+            switch ($value) {
+                case 'Status':
+                    $col->addAttribute('width',"100");
+                    break;
+                case 'Name':
+                    $col->addAttribute('width',"200");
+                    break;
+                case 'Object Name':
+                    $col->addAttribute('width',"250");
+                    break;
+                case 'Start Date':
+                case 'End Date':
+                    $col->addAttribute('width',"160");
+                    break;
+                default:
+                    $col->addAttribute('width',"*");
+                    break;
+            }
             $col->addAttribute('align',"left");
             switch ($value) {
                 case 'Start Date':
@@ -47,6 +66,67 @@
         $tmp->addAttribute('command','attachHeader');
         $tmp->addChild('param', implode(",", $headerFilter));
     }
+    function AddDetailWebJobsGridConfiguration($parent){
+        $col_name_array=array(
+            "ID",
+            "Name",
+            "Status",
+            "Start Date",
+            "End Date",
+            "Object Name"
+            );
+        $head=$parent->addChild('head');
+        $headerFilter=array();
+        foreach ($col_name_array as $value) {
+            $col=$head->addChild('column',$value);
+            $col->addAttribute('type',"ro");
+            switch ($value) {
+                case 'Status':
+                    $col->addAttribute('width',"100");
+                    break;
+                case 'Name':
+                    $col->addAttribute('width',"200");
+                    break;
+                case 'Object Name':
+                    $col->addAttribute('width',"250");
+                    break;
+                case 'Start Date':
+                case 'End Date':
+                    $col->addAttribute('width',"160");
+                    break;
+                default:
+                    $col->addAttribute('width',"*");
+                    break;
+            }
+            $col->addAttribute('align',"left");
+        }        
+    }
+    function AddMessagesWebJobsGridConfiguration($parent) {
+        $col_name_array=array(
+            "Type",
+            "Date",
+            "Message",
+            );
+        $head=$parent->addChild('head');
+        $headerFilter=array();
+        foreach ($col_name_array as $value) {
+            $col=$head->addChild('column',$value);
+            $col->addAttribute('type',"ro");
+            switch ($value) {
+                case 'Type':
+                    $col->addAttribute('width',"60");
+                    break;
+                case 'Date':
+                    $col->addAttribute('width',"160");
+                    break;
+                default:
+                    $col->addAttribute('width',"*");
+                    break;
+            }
+            
+            $col->addAttribute('align',"left");
+        }               
+    }
     function AddMainWebJobsGridData($parent){
         global $dbServer, $dbUser, $dbPassword, $dbDatabase;
         $conn = new mysqli($dbServer, $dbUser, $dbPassword, $dbDatabase);
@@ -55,7 +135,7 @@
             die("Connection failed: " . $conn->connect_error);
         } 
         try {
-            $sql = "SELECT ID, Name, StartDate, EndDate, Status FROM log Where ParentID IS NULL";
+            $sql = "SELECT * FROM log Where ParentID IS NULL";
             $result = $conn->query($sql);
             if ($result->num_rows > 0) {
                 // output data of each row
@@ -63,23 +143,99 @@
                     $row=$parent->addChild("row");
                     $row->addAttribute("id",$rowData['ID']);
                     $row->addChild("cell",$rowData['Name']);
+                    $row->addChild("cell",$rowData['Status']);
                     $row->addChild("cell",$rowData['StartDate']);
                     $row->addChild("cell",$rowData['EndDate']);
-                    $row->addChild("cell",$rowData['Status']);
+                    $row->addChild("cell",RemoveGUIDFromName($rowData['ObjectName']));
                 }
             }            
         } finally {
             $conn->close();
         }
     }
-    if (isset($_GET["id"])) {
+    function AddDetaiWebJobsGridData($parent,$id){
+        global $dbServer, $dbUser, $dbPassword, $dbDatabase;
+        $conn = new mysqli($dbServer, $dbUser, $dbPassword, $dbDatabase);
+        // Check connection
+        if ($conn->connect_error) {
+            die("Connection failed: " . $conn->connect_error);
+        } 
+        try {
+            $sql = "SELECT * FROM log Where id=".$id." or ParentID=".$id." ORDER BY ID";
+            $result = $conn->query($sql);
+            $intID=0;
+            if ($result->num_rows > 0) {
+                // output data of each row
+                while($rowData = $result->fetch_assoc()) {
+                    $row=$parent->addChild("row");
+                    $row->addAttribute("id",$rowData['ID']);
+                    if ($intID == 0) {
+                        $row->addChild("cell","{$id}");
+                    } else {
+                        $row->addChild("cell","{$id}.{$intID}");
+                    }
+                    $row->addChild("cell",$rowData['Name']);
+                    $row->addChild("cell",$rowData['Status']);
+                    $row->addChild("cell",$rowData['StartDate']);
+                    $row->addChild("cell",$rowData['EndDate']);
+                    $row->addChild("cell",RemoveGUIDFromName($rowData['ObjectName']));
+                    $intID+=1;
+                }
+            }            
+        } finally {
+            $conn->close();
+        }
+    }
+    function AddMessagesWebJobsGridData($parent,$id) {
+        global $dbServer, $dbUser, $dbPassword, $dbDatabase;
+        $conn = new mysqli($dbServer, $dbUser, $dbPassword, $dbDatabase);
+        // Check connection
+        if ($conn->connect_error) {
+            die("Connection failed: " . $conn->connect_error);
+        } 
+        try {
+            $sql = "SELECT b.* FROM log a INNER JOIN log_messages b ON (a.ID = b.LogID) WHERE (a.ID = " . $id . " OR a.ParentID = ". $id .") ORDER BY b.id ASC";
+            $result = $conn->query($sql);
+            if ($result->num_rows > 0) {
+                while($rowData = $result->fetch_assoc()) {
+                    $row=$parent->addChild("row");
+                    $row->addAttribute("id",$rowData['id']);
+                    $row->addChild("cell",$rowData['MessageType']);
+                    $row->addChild("cell",$rowData['CreateDate']);
+                    $row->addChild("cell",$rowData['Message']);
+                }
+            }            
+        } finally {
+            $conn->close();
+        }
+    }
+    if (isset($_GET["type"])) {
         $xml = new SimpleXMLElement('<xml version="1.0"/>');
         $xml->addAttribute('encoding',"iso-8859-1");
         $rows= $xml->addChild('rows');
-        if ($_GET['id'] === "weblog" && $_GET["grid"] ==='main' ) {
-            AddMainWebJobsGridConfiguration($rows);
-            AddMainWebJobsGridData($rows);
-        } 
+        switch ($_GET["grid"]) {
+            case 'main':
+                if ($_GET['type'] === "weblog") {
+                    AddMainWebJobsGridConfiguration($rows);
+                    AddMainWebJobsGridData($rows);
+                } 
+                break;
+            case 'detail':
+                if ($_GET['type'] === "weblog") {
+                    AddDetailWebJobsGridConfiguration($rows);
+                    AddDetaiWebJobsGridData($rows,$_GET['id']);
+                }
+                break;
+            case 'messages':
+                if ($_GET['type'] === "weblog") {
+                    AddMessagesWebJobsGridConfiguration($rows);
+                    AddMessagesWebJobsGridData($rows,$_GET['id']);
+                }
+                break;
+            default:
+                # code...
+                break;
+        }
         
 /*         if (substr($_GET["id"],0,4) === "svc_") {
             $id=substr($_GET["id"], 4);

@@ -1,7 +1,7 @@
 <?php
-    $RESTAPIServer = "10.165.168.12/rest";
+    $RESTAPIServer = "127.0.0.1";
     $vmmServer="EISILVMM.EISLAB-IL.INTRA";
-    $dbServer="10.165.168.15";
+    $dbServer="127.0.0.1";
     $dbUser="root";
-    $dbPassword="ESXpumpkin1";
+    $dbPassword="verint1!";
     $dbDatabase="vmmui";

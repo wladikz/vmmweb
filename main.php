@@ -3,6 +3,7 @@
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/database.class.php');
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
     Session::session_start();
+
     if ( !isset($_SESSION["AuthToken"])) {
         header("Location: index.php");
         exit;
@@ -15,7 +16,16 @@
         <link rel="stylesheet" type="text/css" href="dhtmlx/codebase/fonts/font_roboto/roboto.css"/> 
         <link rel="stylesheet" href="dhtmlx/skins/web/dhtmlx.css"> 
         <script src="dhtmlx/codebase/dhtmlx.js"></script>
+        <script src="js/misc_xml.js"></script>
         <script src="js/vmoperations/CreateSnapshot.js"></script>
+        <script src="js/vmoperations/SnapshotManager.js"></script>
+        <script src="js/vmoperations/RevertSnapshot.js"></script>
+        <script src="js/vmoperations/PowerOps.js"></script>
+        <script src="js/vmoperations/OtherOps.js"></script>
+        <script src="js/cookie.umd.js"></script>
+        <script src="js/Misc_Cookies.js"></script>
+        <script src="js/MainForm/MiscMainForm.js"></script>
+        <script src="js/MainForm/VMsView.js"></script>
         <title>Main</title>
     	<style type="text/css">
             div#layoutObj {
@@ -34,38 +44,35 @@
             }            
         </style> 
         <script>
-                var myLayout, myToolbar, myMainMenu;
-                myLayout = myToolbar = myMainMenu = null;
-                var vmsTree, vmsGrid, vmTreeMenu, vmGridMenu, vmGridMenuLoaded ;
-                vmsTree = vmsGrid = vmTreeMenu = vmGridMenu = null;
-                vmGridMenuLoaded= false;
-                var jobsTree, jobsGrid;
-                jobsTree = jobsGrid = null;
+                var myLayout, myToolbar, myMainMenu, myTimerID;
+                myLayout = myToolbar = myMainMenu = myTimerID = null;
 
-                function Save2Session(name,value) {
-                    var r = dhx.ajax.getSync("actions/session_ops.php?operation=save&name="+name+"&value="+value);
-                    var xml = r.xmlDoc.responseXML;
-                    if (xml != null) {
-                        var root = xml.getElementsByTagName("root")[0];
-                        var response = root.getAttribute("result");
-                    }
-                }
-                function GetFromSession(name,defaultValue="") {
-                    var r = dhx.ajax.getSync("actions/session_ops.php?operation=get&name="+name);
-                    var xml = r.xmlDoc.responseXML;
-                    if (xml != null) {
-                        var root = xml.getElementsByTagName("root")[0];
-                        var response = root.getAttribute("result");
-                    }
-                    if ((typeof response === 'undefined') || (response === "")) {
-                        response=defaultValue;
-                    }
-                    return response;
-                }
+                var jobsTree, jobsMainGrid, jobDetailGrid, jobsDetailTabs, jobsDetailMsgGrid;
+                jobsTree = jobsMainGrid = jobDetailGrid = jobsDetailTabs = jobsDetailMsgGrid = null;
+
                 function LoadJobsView() {
                     myLayout.cells("a").showView("jobs");
                     myLayout.cells("b").showView("jobs");
                     myLayout.cells("c").showView("jobs");
+                    if (jobsDetailTabs == null) {
+                        jobsDetailTabs = myLayout.cells("c").attachTabbar({
+                            mode:         "top",
+                            close_button: false,
+                            arrows_mode:  "auto",
+                            tabs: [
+                                {
+                                    id:     "details",
+                                    text:   "Details",
+                                    active: true
+                                },
+                                {
+                                    id:     "messages",
+                                    text:   "Messages",
+                                    enabled: true
+                                }
+                            ]
+                        });
+                    }
                     if (jobsTree == null) {
                         jobsTree=myLayout.cells("a").attachTree("root");
                         jobsTree.attachEvent("onXLS", function(){
@@ -84,118 +91,67 @@
                         jobsTree.attachEvent("onSelect", function(id){
                             if (id === 0) {
                                 myLayout.cells("b").detachObject(true);
-                                jobsGrid = null;
+                                jobsMainGrid = null;
                                 return;
                             }                                
-                            if (jobsGrid == null) {
-                                jobsGrid = myLayout.cells("b").attachGrid();
-                                jobsGrid.setImagePath("images/"); 
-                                jobsGrid.enableMultiline(true); 
+                            if (jobsMainGrid == null) {
+                                jobsMainGrid = myLayout.cells("b").attachGrid();
+                                jobsMainGrid.setImagePath("images/"); 
+                                jobsMainGrid.enableMultiline(true); 
+                                jobsMainGrid.attachEvent("onRowSelect", function(id,ind){
+                                    var GridType=jobsTree.getSelectedItemId();
+                                    if (jobDetailGrid == null) {
+                                        jobDetailGrid = jobsDetailTabs.tabs("details").attachGrid();
+                                        jobDetailGrid.setImagePath("images/"); 
+                                        jobDetailGrid.enableColumnAutoSize(true);
+                                        jobDetailGrid.attachEvent("onResizeEnd", function(obj){
+                                            SaveColWidth(obj);
+                                        });
+                                        jobDetailGrid.attachEvent("onXLE", function(grid_obj,count){
+                                            jobDetailGrid.setUserData('','name','jobDetailGrid');
+                                            var tmp=GetColWidth(jobDetailGrid).split(',');
+                                            for(i = 0; i < tmp.length; i++){
+                                                if(tmp[i] != '') {
+                                                    jobDetailGrid.setColWidth(i,tmp[i]);
+                                                }
+                                            }
+                                            
+                                        });
+
+                                    }
+                                    jobDetailGrid.load("ajax/forms/main/jobsGrid.php?type="+GridType+"&grid=detail&id="+id)
+                                    if (jobsDetailMsgGrid == null) {
+                                        jobsDetailMsgGrid =jobsDetailTabs.tabs("messages").attachGrid();
+                                        jobDetailGrid.setImagePath("images/"); 
+                                    }
+                                    jobsDetailMsgGrid.load("ajax/forms/main/jobsGrid.php?type="+GridType+"&grid=messages&id="+id);
+                                });
+                                jobsMainGrid.enableColumnAutoSize(true);
+                                jobsMainGrid.attachEvent("onResizeEnd", function(obj){
+                                    SaveColWidth(obj);
+                                });
+                                jobsMainGrid.attachEvent("onXLE", function(grid_obj,count){
+                                    jobsMainGrid.setUserData('','name','jobsMainGrid');
+                                    var tmp=GetColWidth(jobsMainGrid).split(',');
+                                    for(i = 0; i < tmp.length; i++){
+                                        if(tmp[i] != '') {
+                                            jobsMainGrid.setColWidth(i,tmp[i]);
+                                        }
+                                    }
+                                    
+                                });
                             }
-                            jobsGrid.load("ajax/forms/main/jobsGrid.php?id="+id+"&grid=main"); 
+                            jobsMainGrid.load("ajax/forms/main/jobsGrid.php?type="+id+"&grid=main");
                         });
 
                     }                    
                 }
-                function LoadVMsView() {
-                    myLayout.cells("a").showView("vms");
-                    myLayout.cells("b").showView("vms");
-                    myLayout.cells("c").showView("vms");
-                    vmTreeMenu=new dhtmlXMenuObject();
-                    vmTreeMenu.renderAsContextMenu();
-			        vmTreeMenu.attachEvent("onClick", function(id, zoneId, cas){
-                        var itemId=GetFromSession('vmTreeMenu');
-                        window[id](myLayout,itemId);                        
-                    });
-                    if (vmsTree == null) {
-                        vmsTree=myLayout.cells("a").attachTree();
-                        vmsTree.attachEvent("onXLS", function(){
-                            myLayout.cells("a").progressOn();
-                        });
-                        vmsTree.attachEvent("onXLE", function(){
-                            myLayout.cells("a").progressOff();
-                            var tmp=vmTreeMenu.getUserData(0,'loaded');
-                            if (! vmGridMenuLoaded) {
-                                vmTreeMenu.loadStruct("ajax/forms/main/vmtreemenu.php");
-                                vmGridMenuLoaded = true;
-                            }
-                           
-                        });
-                        vmsTree.enableDragAndDrop(false);
-                        vmsTree.setChildCalcMode('disabled');
-                        vmsTree.setImagePath("images/");
-                        vmsTree.setXMLAutoLoadingBehaviour("function");
-                        vmsTree.setChildCalcMode("child");
-                        vmsTree.enableCheckBoxes(0);
-                        vmsTree.enableTreeLines(true);
-                        vmsTree.setXMLAutoLoading(function(id) {
-                            vmsTree.load("ajax/forms/main/vmtree.php?id="+id,"xml");
-                        });
-                        vmsTree.enableSmartXMLParsing(true);
-                        vmsTree.load("ajax/forms/main/vmtree.php?id=0","xml");
-                        vmsTree.attachEvent("onOpenStart", function(id, state){
-                            var uri="ajax/forms/main/vmtree.php?id="+id+"&mode="+state;
-                            var xhr = dhx.ajax.getSync(uri);
-                            return true; 
-                        });
-                        vmsTree.attachEvent("onSelect", function(id){
-                            if (id === 0) {
-                                myLayout.cells("b").detachObject(true);
-                                vmsGrid = null;
-                                return;
-                            }                                
-                            if (vmsGrid == null) {
-                                vmsGrid = myLayout.cells("b").attachGrid();
-                                vmsGrid.setImagePath("images/"); 
-                                vmsGrid.enableMultiline(true); 
-                            }
-                            vmsGrid.load("ajax/forms/main/vmgrid.php?id="+id,"xml"); 
-                        });
-                        vmsTree.enableContextMenu(vmTreeMenu);
-                        vmsTree.attachEvent("onBeforeContextMenu",function(itemId){
-                            var type = itemId.match(/svc|ct|vm/)[0];
-                            var isSDN = null;
-                            var VMStatus = "";
-                            switch (type) {
-                                case "svc":
-                                    isSDN = vmsTree.getUserData(itemId,'isSDN');
-                                    VMStatus = vmsTree.getUserData(itemId,'VMStatus');
-                                    break;
-                                case "ct":
-                                    var svcID=vmsTree.getParentId(itemId);
-                                    VMStatus = vmsTree.getUserData(itemId,'VMStatus');
-                                    isSDN=vmsTree.getUserData(svcID,'isSDN');
-                                    break;
-                            }
-                            Save2Session('vmTreeMenu',itemId);
-                            vmTreeMenu.forEachItem(function(itemId){
-                                var mi_isSDN=vmTreeMenu.getUserData(itemId,'isSDN');
-                                var mi_isService=vmTreeMenu.getUserData(itemId,'isService');
-                                var mi_isComputerTier=vmTreeMenu.getUserData(itemId,'isComputerTier');
-                                var mi_VMStatus=vmTreeMenu.getUserData(itemId,'VMStatus');
-                                vmTreeMenu.hideItem(itemId);
-                                switch (type) {
-                                    case "svc":
-                                        if ((mi_isService == 1) && (mi_isSDN == isSDN || mi_isSDN == 2 ) && ((!mi_VMStatus) || (mi_VMStatus && VMStatus.match(mi_VMStatus))) ) {
-                                            vmTreeMenu.showItem(itemId);
-                                        }
-                                        break;
-                                    case "ct":
-                                        if ((mi_isComputerTier == 1) && (mi_isSDN == isSDN || mi_isSDN == 2 ) && ((!mi_VMStatus) || (mi_VMStatus && VMStatus.match(mi_VMStatus)))) {
-                                                vmTreeMenu.showItem(itemId);
-                                        }
-                                        break;
-                                }
-                            });
-                            return true;
-                        });    
-                    }
-                }
+
                 function ChangeView() {
                     var viewType=GetFromSession("viewType","vms");
                     switch (viewType) {
                         case "vms":
-                            LoadVMsView();
+                            LoadVMsView(myLayout);
                             break;
                         case "library":
                             break;
@@ -241,10 +197,30 @@
                     });
                     myToolbar=myLayout.attachToolbar();
                     ChangeView();
+                    myTimerID=setInterval(TimerRefresh, 120000);
+                }
+                function TimerRefresh() {
+                    dhx.ajax.get("actions/ReloadCache.php", function(r){
+                        var items = [];
+                        var xml = r.xmlDoc.responseXML;
+                        var VMsUpdated = xml.getElementsByTagName("VMsUpdated")[0].textContent;
+                        var SvcUpdated = xml.getElementsByTagName("SvcUpdated")[0].textContent;
+                        if (VMsUpdated === "true") {
+                            ReloadVmsGrid();
+                        }
+                        if (SvcUpdated === "true") {
+                            ReloadServiceTree(0);
+                        }
+                    });
+                }
+                function doOnUnload() {
+                    if (myTimerID != null) {
+                        clearInterval(myTimerID);
+                    }
                 }
             </script>
     </head>
-    <body onload="doOnLoad();">
+    <body onload="doOnLoad();" onunload="doOnUnload();">
         <div id="layoutObj" ></div>
     </body>
 </html>

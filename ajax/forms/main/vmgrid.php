@@ -1,8 +1,11 @@
 <?php
-    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . 'includes/vmm_restapi.php');
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/database.class.php');
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
     Session::session_start();
+
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . 'includes/vmm_restapi.php');
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . 'actions/ReloadCache.php');
+
     function AddVMGridConfiguration($parent) {
         $col_name_array=array(
             "Name",
@@ -18,7 +21,6 @@
         foreach ($col_name_array as $value) {
             $col=$head->addChild('column',$value);
             $col->addAttribute('type',"ro");
-            $col->addAttribute('width',"*");
             switch ($value) {
                 case "Name":
                 case "Service":
@@ -54,6 +56,7 @@
             $row=$parent->addChild("row");
             $id="vm_" . $vm->ID;
             $row->addAttribute("id",$id);
+            $row->addChild("userdata",$vm->StatusString)->addAttribute("name","VMStatus");
             $row->addChild("cell",$vm->Name); 
             $row->addChild("cell",$vm->StatusString);
             $pattern='/_\{?[A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{12}\}?$/';
@@ -67,21 +70,6 @@
     }
     if (!isset($_SESSION["AuthToken"])) {
         exit;
-    }
-    function GetVMs(bool $reload=FALSE) {
-        if (isset($_SESSION["VMs"]) && !$reload) {
-            return $_SESSION["VMs"];
-        } else {
-            $vmm=new VMM();
-            $vmm->authHeader=$_SESSION["AuthToken"];
-            $vms=$vmm->GetAllVMs();
-            foreach ($vms as $vm) {
-                $vm->svcid=$vm->ComputerTier->Service->ID;
-                $vm->ctid=$vm->ComputerTier->ID;
-            }
-            $_SESSION["VMs"]=$vms;
-            return $vms;
-        }
     }
     if (isset($_GET["id"])) {
         $xml = new SimpleXMLElement('<xml version="1.0"/>');

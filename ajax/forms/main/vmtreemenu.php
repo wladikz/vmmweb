@@ -5,6 +5,7 @@
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
     Session::session_start();
 
+
     function AddMenuItem($parent,$id,$caption,$link,$image,array $userdata,$isParent=FALSE) {
         $isEnabled=TRUE;
         $item=$parent->addChild("item");
@@ -34,26 +35,49 @@
         }
         return $item;
     }
-    $userDataAny = array('isSDN' => 2,'isService' => 1, 'isComputerTier' => 1, "VMStatus" => "" );
-    $userDataAnyPoweredOn = array('isSDN' => 2,'isService' => 1, 'isComputerTier' => 1, "VMStatus" => "(Running|Mixed)" );
-    $userDataAnyPoweredOff = array('isSDN' => 2,'isService' => 1, 'isComputerTier' => 1, "VMStatus" => "(Stopped|Mixed)" );
-    $userDataAnyService = array('isSDN' => 2,'isService' => 1, 'isComputerTier' => 0, "VMStatus" => "" );
-    $userDataSdnService = array('isSDN' => 1,'isService' => 1, 'isComputerTier' => 0, "VMStatus" => "" );
-    $userDataNonSdnService = array('isSDN' => 0,'isService' => 1, 'isComputerTier' => 0, "VMStatus" => "" );
-    $userDataSdnCT = array('isSDN' => 1,'isService' => 0, 'isComputerTier' => 1, "VMStatus" => "" );
-    $userDataNonSdnCT = array('isSDN' => 0,'isService' => 0, 'isComputerTier' => 1, "VMStatus" => "" );
+    function ConfigureUserData($isSDN=2,$ObjectType=15,$ObjectStatus="") {
+        if ($isSDN < 0) {
+            $isSDN=2;
+        }
+        if ($ObjectType <0) {
+            $ObjectType = 15;
+        }
+        $userData = array('isSDN' => $isSDN,'objType' => $ObjectType, 'ObjStatus' => $ObjectStatus );
+        return $userData;
+    }
+
+    $udOTSvc        = 1;
+    $udOTCt         = 2;
+    $udOTVm         = 4;
+    $udOTCp         = 8;
+    $udSDNYes       = 1;
+    $udSDNNo        = 0;
+    $udSDNAny       = 2;
+    $udObjStatOn    = "Running";
+    $udObjStatOff   = "Stopped";
+    $udObjStatMixed = "Mixed";
     
     $xml = new SimpleXMLElement('<xml version="1.0"/>');
     $xml->addAttribute('encoding',"iso-8859-1");
     $menu=$xml->addChild("menu");
-    $parent=AddMenuItem($menu, "snapshot", "Snapshot", "",GetPageURL('/images/vm/snapshot.png'),$userDataAny,TRUE);
-    AddMenuItem($parent, "CreateSnapshot", "Take Snapshot", "",GetPageURL('/images/vm/vm-snapshot.png'),$userDataAny);
-    AddMenuItem($parent, "RevertToSnapshot", "Revert Snapshot", "", GetPageURL('/images/vm/vm-snapshot-revert.png'),$userDataAny);            
-    $parent=AddMenuItem($menu, "power", "Power", "",NULL,$userDataAny,TRUE);
-    AddMenuItem($parent, "PowerOn", "Power On", "",GetPageURL('/images/vm/vm-poweron.png'),$userDataAnyPoweredOff);
-    AddMenuItem($parent, "PowerOff", "Power Off", "", GetPageURL('/images/vm/vm-poweroff.png'),$userDataAnyPoweredOn);            
-    AddMenuItem($menu, "Scale-Out", "Scale-Out", "",GetPageURL('/images/vm/scale-out.png') ,$userDataNonSdnCT);
-    AddMenuItem($menu, "Delete", "Delete", "",GetPageURL('/images/delete.png') ,$userDataAnyService);
+    $ud=ConfigureUserData(-1,($udOTSvc | $udOTCt | $udOTVm));
+    $parent=AddMenuItem($menu, "snapshot", "Snapshot", "",GetPageURL('/images/vm/snapshot.png'),$ud,TRUE);
+    AddMenuItem($parent, "CreateSnapshot", "Take Snapshot", "",GetPageURL('/images/vm/vm-snapshot.png'),$ud);
+    $ud=ConfigureUserData(-1,($udOTSvc | $udOTVm));
+    AddMenuItem($parent, "RevertSnapshot", "Revert Snapshot", "", GetPageURL('/images/vm/vm-snapshot-revert.png'),$ud); 
+    $ud=ConfigureUserData(-1,($udOTSvc | $udOTVm));
+    AddMenuItem($parent, "SnapshotManager", "SnapshotManager", "", GetPageURL('/images/vm/vmm/Snapshot.png'),$ud); 
+
+    $ud=ConfigureUserData(-1,($udOTSvc | $udOTCt | $udOTVm));           
+    $parent=AddMenuItem($menu, "power", "Power", "",NULL,$ud,TRUE);
+    $ud=ConfigureUserData(-1,($udOTSvc | $udOTCt | $udOTVm),"({$udObjStatOff}|{$udObjStatMixed})");
+    AddMenuItem($parent, "PowerOn", "Power On", "",GetPageURL('/images/vm/vm-poweron.png'),$ud);
+    $ud=ConfigureUserData(-1,($udOTSvc | $udOTCt | $udOTVm),"({$udObjStatOn}|{$udObjStatMixed})");
+    AddMenuItem($parent, "PowerOff", "Power Off", "", GetPageURL('/images/vm/vm-poweroff.png'),$ud);
+    $ud=ConfigureUserData($udSDNNo,$udOTCt);
+    AddMenuItem($menu, "Scale-Out", "Scale-Out", "",GetPageURL('/images/vm/scale-out.png') ,$ud);
+    $ud=ConfigureUserData(-1,($udOTSvc | $udOTVm));
+    AddMenuItem($menu, "DeleteItem", "Delete", "",GetPageURL('/images/delete.png') ,$ud);
 
     Header('Content-type: text/xml');
     $tmp=$xml->asXML();
