@@ -1,7 +1,11 @@
 <?php
-    $RESTAPIServer = "127.0.0.1";
+    $RESTAPIServer = "10.165.168.14";
     $vmmServer="EISILVMM.EISLAB-IL.INTRA";
-    $dbServer="127.0.0.1";
-    $dbUser="root";
-    $dbPassword="verint1!";
-    $dbDatabase="vmmui";
+    $JobsDbServer="10.165.168.15";
+    $JobsDbUser="root";
+    $JobsDbPassword="ESXpumpkin1";
+    $JobsDbDatabase="vmmui";
+    define('CacheDbServer',"10.165.168.15");
+    define('CacheDbUser',"root");
+    define('CacheDbPassword',"ESXpumpkin1");
+    define('CacheDbDatabase',"cache");
