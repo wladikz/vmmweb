@@ -1,6 +1,8 @@
 <?php
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/database.class.php');
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/configuration.php');
+
     if(session_status() !== PHP_SESSION_ACTIVE) {
         Session::session_start();
     }
@@ -20,21 +22,29 @@
         } else {
             $curVMs=array();
         }
-        $json = file_get_contents('c:/Scripts/DataUpdater/VmCache.json');
-        if ($json == "") {
-            return FALSE;    
-        }
-        $json_data = json_decode($json);
+        $CacheDbServer=CacheDbServer;
+        $CacheDbUser=CacheDbUser;
+        $CacheDbPassword=CacheDbPassword;
+        $CacheDbDatabase=CacheDbDatabase;
+        $conn = new mysqli($CacheDbServer, $CacheDbUser, $CacheDbPassword, $CacheDbDatabase);
+        // Check connection
+        if ($conn->connect_error) {
+            die("Connection failed: " . $conn->connect_error);
+        } 
         $vms=array();
-        foreach ($json_data as $vm) {
-            if (strcasecmp($vm->Owner,$user) == 0 || strcasecmp($vm->UserRole,$userRole) == 0 ) {
-                $vms[] = $vm;
-            } elseif ( isset($vm->GrantedToList->value)  && 
-                    (array_search($userRole,$vm->GrantedToList->value) !== FALSE || array_search($user,$vm->GrantedToList->value) !== FALSE) ) {
+        try {
+            $sql = "SELECT * FROM VMCache WHERE Owner='".$user."' OR UserRole='".$userRole."' OR GrantedToList like '%|".$userRole."|%'";
+            $result = $conn->query($sql);
+            if ($result->num_rows > 0) {
+                // output data of each row
+                while($rowData = $result->fetch_assoc()) {
+                    $vm=json_decode($rowData["Data"]);
+                    $vm->LastChanged=$rowData["LastChanged"];
                     $vms[] = $vm;
-            } elseif (is_string($vm->GrantedToList) && (strcasecmp($vm->GrantedToList,$user) == 0 || strcasecmp($vm->GrantedToList,$userRole) == 0)) {
-                $vms[] = $vm;
-            }
+                }
+            }            
+        } finally {
+            $conn->close();
         }
         foreach ($vms as $vm) {
             if ($vm->ComputerTier != null) {
@@ -65,21 +75,29 @@
         } else {
             $curVMs=array();
         }
-        $json = file_get_contents('c:/Scripts/DataUpdater/ServiceCache.json');
-        if ($json == "") {
-            return FALSE;    
-        }
-        $json_data = json_decode($json);
+        $CacheDbServer=CacheDbServer;
+        $CacheDbUser=CacheDbUser;
+        $CacheDbPassword=CacheDbPassword;
+        $CacheDbDatabase=CacheDbDatabase;
+        $conn = new mysqli($CacheDbServer, $CacheDbUser, $CacheDbPassword, $CacheDbDatabase);
+        // Check connection
+        if ($conn->connect_error) {
+            die("Connection failed: " . $conn->connect_error);
+        } 
         $vms=array();
-        foreach ($json_data as $vm) {
-            if (strcasecmp($vm->Owner,$user) == 0 || strcasecmp($vm->UserRole,$userRole) == 0 ) {
-                $vms[] = $vm;
-            } elseif ( isset($vm->GrantedToList->value)  && 
-                    (array_search($userRole,$vm->GrantedToList->value) !== FALSE || array_search($user,$vm->GrantedToList->value) !== FALSE) ) {
+        try {
+            $sql = "SELECT * FROM SvcCache WHERE Owner='".$user."' OR UserRole='".$userRole."' OR GrantedToList like '%|".$userRole."|%'";
+            $result = $conn->query($sql);
+            if ($result->num_rows > 0) {
+                // output data of each row
+                while($rowData = $result->fetch_assoc()) {
+                    $vm=json_decode($rowData["Data"]);
+                    $vm->LastChanged=$rowData["LastChanged"];
                     $vms[] = $vm;
-            } elseif (is_string($vm->GrantedToList) && (strcasecmp($vm->GrantedToList,$user) == 0 || strcasecmp($vm->GrantedToList,$userRole) == 0)) {
-                $vms[] = $vm;
-            }
+                }
+            }            
+        } finally {
+            $conn->close();
         }
         if ($vms != $curVMs) {
             $_SESSION["Services"]=$vms;
