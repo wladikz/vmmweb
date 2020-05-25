@@ -166,6 +166,7 @@ class CreateSnapshotParams extends BaseParams{
     public  $SnapshotName    = "";
     public  $Description     = "";
     public  $WithMemory      = false;
+    public  $Force           = false;
     
     function Validate() {
         if ($this->SnapshotName == "") {
@@ -181,7 +182,8 @@ class CreateSnapshotParams extends BaseParams{
             $myObj->Description=$this->Description;
         }
         $myObj->SnapshotName=$this->SnapshotName;
-        $myObj->WithMemory=$this->WithMemory;            
+        $myObj->WithMemory=$this->WithMemory;
+        $myObj->Force=$this->Force;    
         return json_encode($myObj);
     }
 }
@@ -265,9 +267,8 @@ class VMM {
     public $cloud;
     
     function __construct() {
-        global $RESTAPIServer,$vmmServer;
-        $this->restserver = $RESTAPIServer;
-        $this->vmmServer = $vmmServer;
+        $this->restserver = RESTAPIServer;
+        $this->vmmServer = vmmServer;
         $this->user = "";
         $this->password = "";
         $this->authHeader = "";
@@ -275,7 +276,7 @@ class VMM {
         $this->userrole = "";
     }
     function CheckLogin() {
-        $BaseURL = "http://" . $this->restserver . "/rest.php?uri=checklogin.ps1";
+        $BaseURL = "{$this->restserver}/rest.php?uri=checklogin.ps1";
         $authHeader="";
         if (!empty($this->authHeader)) {
             $authHeader=$this->authHeader;
@@ -307,7 +308,7 @@ class VMM {
         }
     }
     function Login() {
-        $BaseURL = "http://" . $this->restserver . "/rest.php?uri=login.ps1";
+        $BaseURL = "{$this->restserver}/rest.php?uri=login.ps1";
         $authHeader="";
         if (!empty($this->authHeader)) {
             $authHeader=$this->authHeader;
@@ -339,7 +340,7 @@ class VMM {
         }
     }
     function GetAllServices() {
-        $BaseURL = "http://" . $this->restserver . "/rest.php?uri=service/getservice.ps1";
+        $BaseURL = "{$this->restserver}/rest.php?uri=service/getservice.ps1";
         if (empty($this->authHeader)) {
             throw new Exception('Not Authorized');
         }
@@ -366,7 +367,7 @@ class VMM {
         }
     }
     function GetAllVMs() {
-        $BaseURL = "http://" . $this->restserver . "/rest.php?";
+        $BaseURL = "{$this->restserver}/rest.php?";
         if (empty($this->authHeader)) {
             throw new Exception('Not Authorized');
         }
@@ -393,7 +394,7 @@ class VMM {
         }        
     }
     function CreateSnapshot(CreateSnapshotParams $params) {
-        $BaseURL = "http://" . $this->restserver . "/rest.php?uri=snapshot/createsnapshot.ps1&async=1";
+        $BaseURL = "{$this->restserver}/rest.php?uri=snapshot/createsnapshot.ps1&async=1";
         if (empty($this->authHeader)) {
             throw new Exception('Not Authorized');
         }
@@ -418,7 +419,7 @@ class VMM {
 
     }
     function RevertSnapshot(RevertSnapshotParams $params) {
-        $BaseURL = "http://" . $this->restserver . "/rest.php?uri=snapshot/revertsnapshot.ps1&async=1";
+        $BaseURL = "{$this->restserver}/rest.php?uri=snapshot/revertsnapshot.ps1&async=1";
         if (empty($this->authHeader)) {
             throw new Exception('Not Authorized');
         }
@@ -443,7 +444,7 @@ class VMM {
 
     }
     function DeleteSnapshot(DeleteSnapshotParams $params) {
-        $BaseURL = "http://" . $this->restserver . "/rest.php?uri=snapshot/deletesnapshot.ps1&async=1";
+        $BaseURL = "{$this->restserver}/rest.php?uri=snapshot/deletesnapshot.ps1&async=1";
         if (empty($this->authHeader)) {
             throw new Exception('Not Authorized');
         }
@@ -468,7 +469,7 @@ class VMM {
 
     }
     function DeleteService($ServiceID) {
-        $BaseURL = "http://" . $this->restserver . "/rest.php?uri=service/deleteservice.ps1";
+        $BaseURL = "{$this->restserver}/rest.php?uri=service/deleteservice.ps1";
         if (empty($this->authHeader)) {
             throw new Exception('Not Authorized');
         }
@@ -495,7 +496,7 @@ class VMM {
 
     }
     function PowerOn(VMOpsParams $params) {
-        $BaseURL = "http://" . $this->restserver . "/rest.php?uri=vm_operation.ps1";
+        $BaseURL = "{$this->restserver}/rest.php?uri=vm_operation.ps1";
         if (empty($this->authHeader)) {
             throw new Exception('Not Authorized');
         }
@@ -521,7 +522,7 @@ class VMM {
         }
     }
     function PowerOff(VMOpsParams $params) {
-        $BaseURL = "http://" . $this->restserver . "/rest.php?uri=vm_operation.ps1";
+        $BaseURL = "{$this->restserver}/rest.php?uri=vm_operation.ps1";
         if (empty($this->authHeader)) {
             throw new Exception('Not Authorized');
         }

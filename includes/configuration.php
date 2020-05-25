@@ -1,6 +1,6 @@
 <?php
-    $RESTAPIServer = "10.165.168.14";
-    $vmmServer="EISILVMM.EISLAB-IL.INTRA";
+    define('RESTAPIServer',"http://10.165.168.14/rest");
+    define('vmmServer',"EISILVMM.EISLAB-IL.INTRA");
     $JobsDbServer="10.165.168.15";
     $JobsDbUser="root";
     $JobsDbPassword="ESXpumpkin1";
