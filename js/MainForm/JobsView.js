@@ -1,7 +1,7 @@
 var jobsTree, jobsMainGrid, jobDetailGrid, jobsDetailTabs, jobsDetailMsgGrid;
 jobsTree = jobsMainGrid = jobDetailGrid = jobsDetailTabs = jobsDetailMsgGrid = null;
 
-function LoadJobsView() {
+function LoadJobsView(myLayout) {
     myLayout.cells("a").showView("jobs");
     myLayout.cells("b").showView("jobs");
     myLayout.cells("c").showView("jobs");
