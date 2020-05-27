@@ -1,9 +1,8 @@
 <?php
-    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . 'includes/vmm_restapi.php');
-    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . 'includes/configuration.php');
-    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/database.class.php');
-    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
-    Session::session_start();
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/vmm_restapi.php');
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/configuration.php');
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/SessionHandler.php');
+    MySQLSessionHandler::session_start();
     
     if (!isset($_SESSION["AuthToken"])) {
         exit;
@@ -128,8 +127,8 @@
         }               
     }
     function AddMainWebJobsGridData($parent){
-        global $dbServer, $dbUser, $dbPassword, $dbDatabase;
-        $conn = new mysqli($dbServer, $dbUser, $dbPassword, $dbDatabase);
+        global $JobsDbServer, $JobsDbUser, $JobsDbPassword, $JobsDbDatabase;
+        $conn = new mysqli($JobsDbServer, $JobsDbUser, $JobsDbPassword, $JobsDbDatabase);
         // Check connection
         if ($conn->connect_error) {
             die("Connection failed: " . $conn->connect_error);
@@ -154,8 +153,8 @@
         }
     }
     function AddDetaiWebJobsGridData($parent,$id){
-        global $dbServer, $dbUser, $dbPassword, $dbDatabase;
-        $conn = new mysqli($dbServer, $dbUser, $dbPassword, $dbDatabase);
+        global $JobsDbServer, $JobsDbUser, $JobsDbPassword, $JobsDbDatabase;
+        $conn = new mysqli($JobsDbServer, $JobsDbUser, $JobsDbPassword, $JobsDbDatabase);
         // Check connection
         if ($conn->connect_error) {
             die("Connection failed: " . $conn->connect_error);
@@ -187,8 +186,8 @@
         }
     }
     function AddMessagesWebJobsGridData($parent,$id) {
-        global $dbServer, $dbUser, $dbPassword, $dbDatabase;
-        $conn = new mysqli($dbServer, $dbUser, $dbPassword, $dbDatabase);
+        global $JobsDbServer, $JobsDbUser, $JobsDbPassword, $JobsDbDatabase;
+        $conn = new mysqli($JobsDbServer, $JobsDbUser, $JobsDbPassword, $JobsDbDatabase);
         // Check connection
         if ($conn->connect_error) {
             die("Connection failed: " . $conn->connect_error);

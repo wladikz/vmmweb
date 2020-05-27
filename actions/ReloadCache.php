@@ -1,10 +1,10 @@
 <?php
-    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/database.class.php');
-    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/configuration.php');
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/SessionHandler.php');
+    
 
     if(session_status() !== PHP_SESSION_ACTIVE) {
-        Session::session_start();
+        MySQLSessionHandler::session_start();
     }
     function UpdateVMs() {
         if (isset($_SESSION["username"]) && !empty($_SESSION["username"])) {
@@ -22,11 +22,7 @@
         } else {
             $curVMs=array();
         }
-        $CacheDbServer=CacheDbServer;
-        $CacheDbUser=CacheDbUser;
-        $CacheDbPassword=CacheDbPassword;
-        $CacheDbDatabase=CacheDbDatabase;
-        $conn = new mysqli($CacheDbServer, $CacheDbUser, $CacheDbPassword, $CacheDbDatabase);
+        $conn = new PDOWrapper\DB(CacheDbServer, CacheDbDatabase, CacheDbUser, CacheDbPassword);
         // Check connection
         if ($conn->connect_error) {
             die("Connection failed: " . $conn->connect_error);
@@ -35,21 +31,21 @@
         try {
             $sql = "SELECT * FROM VMCache WHERE Owner='".$user."' OR UserRole='".$userRole."' OR GrantedToList like '%|".$userRole."|%'";
             $result = $conn->query($sql);
-            if ($result->num_rows > 0) {
+            if (is_array($result) &&  count($result) > 0) {
                 // output data of each row
-                while($rowData = $result->fetch_assoc()) {
+                foreach($result as $rowData) {
                     $vm=json_decode($rowData["Data"]);
-                    $vm->LastChanged=$rowData["LastChanged"];
+                    $vm->LastChanged=strtotime($rowData["LastChanged"]);
                     $vms[] = $vm;
                 }
             }            
         } finally {
-            $conn->close();
+            $conn->CloseConnection();
         }
-        foreach ($vms as $vm) {
-            if ($vm->ComputerTier != null) {
-                $vm->svcid=$vm->ComputerTier->Service->ID;
-                $vm->ctid=$vm->ComputerTier->ID;
+        foreach ($vms as $item) {
+            if ($item->ComputerTier != null) {
+                $item->svcid=$item->ComputerTier->Service->ID;
+                $item->ctid=$item->ComputerTier->ID;
             }
         }
         if ($vms != $curVMs) {
@@ -75,11 +71,9 @@
         } else {
             $curVMs=array();
         }
-        $CacheDbServer=CacheDbServer;
-        $CacheDbUser=CacheDbUser;
-        $CacheDbPassword=CacheDbPassword;
-        $CacheDbDatabase=CacheDbDatabase;
-        $conn = new mysqli($CacheDbServer, $CacheDbUser, $CacheDbPassword, $CacheDbDatabase);
+
+
+        $conn = new PDOWrapper\DB(CacheDbServer, CacheDbDatabase, CacheDbUser, CacheDbPassword);
         // Check connection
         if ($conn->connect_error) {
             die("Connection failed: " . $conn->connect_error);
@@ -88,16 +82,16 @@
         try {
             $sql = "SELECT * FROM SvcCache WHERE Owner='".$user."' OR UserRole='".$userRole."' OR GrantedToList like '%|".$userRole."|%'";
             $result = $conn->query($sql);
-            if ($result->num_rows > 0) {
+            if (is_array($result) &&  count($result) > 0) {
                 // output data of each row
-                while($rowData = $result->fetch_assoc()) {
+                foreach($result as $rowData) {
                     $vm=json_decode($rowData["Data"]);
-                    $vm->LastChanged=$rowData["LastChanged"];
+                    $vm->LastChanged=strtotime($rowData["LastChanged"]);
                     $vms[] = $vm;
                 }
             }            
         } finally {
-            $conn->close();
+            $conn->CloseConnection();
         }
         if ($vms != $curVMs) {
             $_SESSION["Services"]=$vms;

@@ -1,7 +1,6 @@
 <?php
-    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/database.class.php');
-    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
-    Session::session_start();
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/SessionHandler.php');
+    MySQLSessionHandler::session_start();
 
     $xml = new SimpleXMLElement('<xml version="1.0"/>');
     $xml->addAttribute('encoding',"iso-8859-1");

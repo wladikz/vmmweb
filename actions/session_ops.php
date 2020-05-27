@@ -1,7 +1,6 @@
 <?php
-    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/database.class.php');
-    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
-    Session::session_start();
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/SessionHandler.php');
+    MySQLSessionHandler::session_start();
     if (isset($_GET['operation'])) {
         $varName=$_GET['name'];
         if (isset($_GET['value'])) {

@@ -1,7 +1,6 @@
 <?php
-    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/database.class.php');
-    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
-    Session::session_start();
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/SessionHandler.php');
+    MySQLSessionHandler::session_start();
 
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . 'includes/vmm_restapi.php');
     require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . 'includes/misc.php');
@@ -55,6 +54,9 @@
         return $result;
     }
     function AddCPTree($parent,$parentCpID,$CPs,$currentCP) {
+        if (! is_array($CPs)) {
+            return;
+        }
         $a=array_keys(array_column($CPs,'ParentCheckpointID'),$parentCpID);
         foreach ($a as $indx) {
             $item = $parent->addChild('item');
@@ -132,7 +134,9 @@
         $tree = $xml->addChild('tree');
         $tree->addAttribute("id","root");
         if ($vm != null) {
-            AddCPTree($tree,$vm->VMId,$vm->Checkpoints,$vm->LastRestoredCheckpointID);
+            $CPs=array();
+            $CPs[]=$vm->Checkpoints;
+            AddCPTree($tree,$vm->VMId,$CPs,$vm->LastRestoredCheckpointID);
         }
         Header('Content-type: text/xml');
         $tmp=$xml->asXML();

@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <?php
-    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/database.class.php');
-    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/mysql.sessions.php');
-    Session::session_start();
+    require_once ($_SERVER['CONTEXT_DOCUMENT_ROOT'] . '/includes/MySQL_Session/SessionHandler.php');
+    MySQLSessionHandler::session_start();
     if ( !empty($_SESSION["username"]) && !empty($_SESSION["password"]) && !isset($_SESSION["ERROR_MSG"]) ) {
         if (!isset($_SESSION["AvailableURs"])) {
             header("Location: main.php");
