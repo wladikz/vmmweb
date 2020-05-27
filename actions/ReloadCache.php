@@ -152,7 +152,7 @@
             $conn->CloseConnection();
         }
         if ($vms != $curVMs) {
-            $_SESSION["VMs"]=$vms;
+            $_SESSION["ServiceTemplate"]=$vms;
             return TRUE;
         } else {
             return FALSE;
@@ -174,6 +174,15 @@
             return $_SESSION["VMs"];
         }
     }
+    function GetServiceTemplates(bool $reload=FALSE) {
+        if (isset($_SESSION["ServiceTemplate"]) && !$reload) {
+            return $_SESSION["ServiceTemplate"];
+        } else {
+            UpdateServiceTemplates();
+            return $_SESSION["ServiceTemplate"];
+        }
+    }
+
     if (str_replace('\\', '/', __FILE__) == $_SERVER['SCRIPT_FILENAME']) {
         $vmsUpdated=UpdateVMs() ? 'true' : 'false';
         $svcUpdated=UpdateServices() ? 'true' : 'false';
