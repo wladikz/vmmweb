@@ -20,7 +20,7 @@ function GetPageURL($reqURL) {
     return $pageURL;
 }
 function GetTypeFromID($itemID) {
-    preg_match("/^svc_|^ct_|^vm_/",$itemID,$matches);
+    preg_match("/^svc_|^ct_|^vm_|^st_/",$itemID,$matches);
     return $matches[0];    
 }
 function GetIDwoType($itemID) {
