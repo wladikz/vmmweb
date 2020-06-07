@@ -29,7 +29,13 @@
         }
     }
     function AddSTData($parent,$data){ 
-        $cts=$data->ComputerTiers->value;
+        if (isset($data->ComputerTiers->value)) {
+            $cts=$data->ComputerTiers->value;
+        } else {
+            $cts=[];
+            $cts[]=$data->ComputerTiers;
+        }
+        
         usort($cts, function($a, $b) {
                 return strcmp($a->Name, $b->Name);
             });
@@ -52,10 +58,8 @@
         AddLibGridConfiguration($rows);
         $STs=GetServiceTemplates();
         $id=GetIDwoType($_GET["id"]);
-        $a=array_keys(array_column($STs,'ID'),$id);
-        foreach ($a as $indx) {
-            $data = $STs[$indx];
-        }
+        $indx=array_search($id,array_column($STs,'ID'));
+        $data = $STs[$indx];
         AddSTData($rows,$data);
     }
     Header('Content-type: text/xml');
