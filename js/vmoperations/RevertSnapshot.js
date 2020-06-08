@@ -35,6 +35,7 @@ function RevertSnapshotOnButtonClick(name) {
             break;
     }
     if (operation !== "") {
+        RevertSnapshotPopupWindow.progressOn();
         if ( confirm("Are you sure?") ) {
             var vmid=RevertSnapshotForm.getItemValue("vmid");
             var snapID=RevertSnapshotTree.getSelectedItemId();
@@ -47,7 +48,8 @@ function RevertSnapshotOnButtonClick(name) {
                 } else if (status.toUpperCase() == "error".toUpperCase()) {
                     var errormsg=xml.getElementsByTagName("ErrorMessage")[0].childNodes[0].nodeValue;
                     alert(errormsg);
-                }                            
+                }
+                RevertSnapshotPopupWindow.progressOff();
                 RevertSnapshotPopupWindow.close();
                 RevertSnapshotPopupWindow=null;
             });
@@ -67,6 +69,12 @@ function RevertSnapshot(Layout,itemID) {
     RevertSnapshotPopupWindow.button("park").hide();
     RevertSnapshotPopupWindow.denyResize();
     RevertSnapshotForm=RevertSnapshotPopupWindow.attachForm();
+    RevertSnapshotForm.attachEvent("onXLS", function(){
+        RevertSnapshotPopupWindow.progressOn();
+    });
+    RevertSnapshotForm.attachEvent("onXLE", function(){
+        RevertSnapshotPopupWindow.progressOff();
+    });       
     CreateRevertSnapshotForm(RevertSnapshotForm,itemID);
     RevertSnapshotForm.attachEvent("onButtonClick",RevertSnapshotOnButtonClick);
 }
