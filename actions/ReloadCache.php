@@ -49,8 +49,13 @@
         }
         foreach ($vms as $item) {
             if ($item->ComputerTier != null) {
-                $item->svcid=$item->ComputerTier->Service->ID;
-                $item->ctid=$item->ComputerTier->ID;
+                if (isset($item->ComputerTier->Service->ID)) {
+                    $item->svcid=$item->ComputerTier->Service->ID;
+                }
+                if (isset($item->ComputerTier->ID)) {
+                    $item->ctid=$item->ComputerTier->ID;
+                }
+                
             }
         }
         if ($vms != $curVMs) {
